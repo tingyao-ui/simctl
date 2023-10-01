@@ -161,8 +161,22 @@ module SimCtl
     #
     # @return [Bool]
     def ready?
-      running_services = launchctl.list.reject { |service| service.pid.to_i == 0 }.map(&:name)
-      (required_services_for_ready - running_services).empty?
+      if (Xcode::Version.gte? '14.0') && runtime.type == :ios
+        command = "xcrun simctl bootstatus #{udid}"
+        $stderr.puts command if ENV['SIMCTL_DEBUG']
+        Open3.popen3(command) do |_stdin, stdout, stderr, result|
+          output = stdout.read
+          if result.value.to_i > 0
+            output = stderr.read if output.empty?
+            raise output
+          end
+          $stderr.puts output.chomp if ENV['SIMCTL_DEBUG']
+          output.include? "Finished"
+        end
+      else
+        running_services = launchctl.list.reject { |service| service.pid.to_i == 0 }.map(&:name)
+        (required_services_for_ready - running_services).empty?
+      end
     end
 
     # Reloads the device information
