@@ -161,7 +161,7 @@ module SimCtl
     #
     # @return [Bool]
     def ready?
-      if (Xcode::Version.gte? '14.0') && runtime.type == :ios
+      if (Xcode::Version.gte? '14.0')
         command = "xcrun simctl bootstatus #{udid}"
         $stderr.puts command if ENV['SIMCTL_DEBUG']
         Open3.popen3(command) do |_stdin, stdout, stderr, result|
